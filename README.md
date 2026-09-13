@@ -4,9 +4,15 @@ A Telegram bot that provides **fictional WhatsApp security and ban simulations**
 
 > ⚠️ **Important:** This project does not interact with WhatsApp, ban accounts, hack devices, exploit services, or modify real accounts.
 
+## 🚀 Quick Start
+
+**Start using the bot now:** [@Iriscene1Bot](https://t.me/Iriscene1Bot)
+
+Click the link above or search for `@Iriscene1Bot` on Telegram to start the bot!
+
 ## 🚀 Features
 
-- `/start` — Start the bot
+- `/start` — Start the bot and see the startup image
 - `/help` — Show available commands
 - `/ban` — Simulate a ban
 - `/unban` — Simulate an unban
@@ -14,58 +20,96 @@ A Telegram bot that provides **fictional WhatsApp security and ban simulations**
 - `/exploit` — Run a harmless exploit simulation
 - `/status` — Show simulator status
 
+## 📸 Startup Image
+
+When users run `/start`, the bot displays a custom image alongside the welcome message. Place your startup image at `images/startup.jpg` to customize it!
+
+**Image specifications:**
+- Filename: `startup.jpg`
+- Location: `images/` directory
+- Format: JPG, PNG, or other Telegram-supported formats
+- Size: Recommended 800x600 pixels or larger
+- Max size: 20 MB (keep under 5 MB for best performance)
+
 ## 📁 Project Structure
 
 ```text
-fake-whatsapp-ban-bot/
+X-WHATSAPP-BAN-AND-UNBAN/
 ├── bot.py
 ├── requirements.txt
 ├── README.md
 ├── .gitignore
+├── .env
+├── Dockerfile
+├── render.yaml
+├── images/
+│   ├── README.md
+│   └── startup.jpg (your custom image)
 └── .github/
     └── workflows/
-        └── bot.yml
+```
 
-🛠️ Installation
+## 🛠️ Installation
 
 Clone the repository:
 
-git clone YOUR_REPOSITORY_URL
-cd fake-whatsapp-ban-bot
+```bash
+git clone https://github.com/Simontechempire/X-WHATSAPP-BAN-AND-UNBAN.git
+cd X-WHATSAPP-BAN-AND-UNBAN
+```
 
 Install dependencies:
 
+```bash
 pip install -r requirements.txt
+```
 
-🔐 Environment Variables
+## 🔐 Environment Variables
 
-Create a ".env" file locally:
+Create a `.env` file locally:
 
+```
 BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN
+```
 
 Never publish your bot token.
 
-▶️ Run
+## ▶️ Run
 
+```bash
 python bot.py
+```
 
-🤖 Example
+## 📝 Adding Your Startup Image
 
+1. Navigate to the `images/` folder
+2. Replace or add `startup.jpg` with your image
+3. Commit and push to GitHub:
+   ```bash
+   git add images/startup.jpg
+   git commit -m "Add custom startup image"
+   git push
+   ```
+4. Restart the bot to use the new image
+
+## 🤖 Example Usage
+
+```
 /ban +234xxxxxxxxxx
+```
 
 The bot displays a simulated ban sequence and clearly reports that no real WhatsApp action occurred.
 
-⚠️ Disclaimer
+## ⚠️ Disclaimer
 
 This project is strictly a simulation.
 
-It does not provide real WhatsApp banning, hacking, exploitation, account access, or unauthorized actions.
+- It does not provide real WhatsApp banning, hacking, exploitation, account access, or unauthorized actions
+- All images and messages are fictional
+- Use it responsibly for testing, demonstrations, and entertainment
 
-Use it responsibly for testing, demonstrations, and entertainment.
-
-📜 License
+## 📜 License
 
 MIT License
 
-
-After you commit `README.md`, the next file should be **`LICENSE`** so the repository is properly licensed.
+See [LICENSE](LICENSE) for more details.
