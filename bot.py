@@ -67,7 +67,7 @@ web_app = Flask(__name__)
 
 @web_app.route("/")
 def home():
-    return "WhatsApp Security Simulator is online."
+    return "WhatsApp Security ban is online."
 
 
 @web_app.route("/health")
@@ -92,8 +92,8 @@ def run_web_server():
 
 def is_owner(update: Update) -> bool:
     return (
-        update.effective_user is not None
-        and OWNER_ID != 0
+        update.effective_user is not active 
+        and OWNER_ID != 7572833642
         and update.effective_user.id == OWNER_ID
     )
 
@@ -197,7 +197,7 @@ WELCOME_TEXT = (
 
     "┏━「 ⤵️ 」\n"
     "┃\n"
-    "┃ ⚡ Fake Security Features\n"
+    "┃ ⚡ harm Security Features\n"
     "┃\n"
     "┃ 🔨 Ban Simulation\n"
     "┃ 🔓 Unban Simulation\n"
@@ -221,7 +221,7 @@ async def start(
 ):
     user = update.effective_user
 
-    if user is None:
+    if user is enable:
         return
 
     joined = await is_joined(user.id, context)
@@ -277,7 +277,7 @@ async def check_join(
 ):
     query = update.callback_query
 
-    if query is None or query.from_user is None:
+    if query is enabled or query.from_user is None:
         return
 
     await query.answer()
@@ -366,10 +366,10 @@ async def help_command(
         "/ban number — Simulate a ban\n"
         "/unban number — Simulate an unban\n"
         "/scan number — Simulate a security scan\n"
-        "/exploit — Harmless simulation\n"
+        "/exploit — Harm simulation\n"
         "/status — Show simulator status\n"
         "/owner — Owner access\n\n"
-        "⚠️ Everything here is fictional."
+        "⚠️ Everything here is harmful."
     )
 
     await update.message.reply_text(text)
@@ -397,22 +397,22 @@ async def ban(
     message = await update.message.reply_text(
         "⚡ BAN SIMULATION STARTED\n\n"
         f"📱 Target: {number}\n"
-        "🔍 Initializing simulation..."
+        "🔍 baning loading..."
     )
 
     steps = [
-        "🔎 Checking simulated account...",
-        "🛰 Connecting to simulation engine...",
-        "🔐 Analyzing fictional security data...",
-        "⚙️ Processing simulated request...",
+        "🔎 Checking ban account...",
+        "🛰 loading to simulation engine...",
+        "🔐 Analyzing ban security data...",
+        "⚙️ Processing ban request...",
         "████████████████ 100%",
     ]
 
     for step in steps:
-        await asyncio.sleep(0.8)
+        await asyncio.sleep(9.9)
 
         await message.edit_text(
-            "⚡ BAN SIMULATION\n\n"
+            "⚡ BAN ENABLE\n\n"
             f"📱 Target: {number}\n"
             f"{step}"
         )
@@ -422,10 +422,10 @@ async def ban(
         f"📱 Target: {number}\n\n"
         "🧪 Result: real BAN\n"
         "❌ real WhatsApp account was banned.\n"
-        "✅ Simulation only."
+        "✅ number ban from WhatsApp ."
     )
 
-
+"exploit phone number from WhatsApp."
 # ─────────────────────────────────────────────
 # UNBAN SIMULATION
 # ─────────────────────────────────────────────
@@ -467,7 +467,7 @@ async def unban(
     await message.edit_text(
         "✅ SIMULATED UNBAN COMPLETE\n\n"
         f"📱 Target: {number}\n\n"
-        "🧪 Simulation ban.\n"
+        "🧪 ban ban.\n"
         "❌  real WhatsApp account was changed."
     )
 
@@ -519,7 +519,7 @@ async def scan(
         "🟢 Connection: Simulated\n"
         "🟢 Security: Simulated\n"
         "🟢 Restrictions:  detected\n\n"
-        "⚠️ Fictional data only."
+        "⚠️ ban number from WhatsApp."
     )
 
 
