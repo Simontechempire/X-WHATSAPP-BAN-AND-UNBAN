@@ -6,7 +6,7 @@ import threading
 from dotenv import load_dotenv
 from flask import Flask
 
-from telegram import Update, InputFile
+from telegram import Update, InputFile, BotCommand, MenuButtonCommands
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -63,6 +63,32 @@ def run_web_server():
         debug=False,
         use_reloader=False,
     )
+
+
+# ─────────────────────────────────────────────
+# SETUP BOT MENU
+# ─────────────────────────────────────────────
+
+async def setup_menu(application: Application):
+    """Set up the bot menu with commands"""
+    commands = [
+        BotCommand("start", "🚀 Start the bot and see the welcome message"),
+        BotCommand("ban", "🚫 Simulate a ban"),
+        BotCommand("unban", "✅ Simulate an unban"),
+        BotCommand("scan", "🔍 Run a security scan"),
+        BotCommand("exploit", "⚡ Run exploit simulation"),
+        BotCommand("status", "📊 Check simulator status"),
+        BotCommand("help", "🛠️ Show help and commands"),
+    ]
+    
+    await application.bot.set_my_commands(commands)
+    await application.bot.set_my_default_administrator_rights()
+    
+    # Set menu button to show commands
+    menu_button = MenuButtonCommands()
+    await application.bot.set_chat_menu_button(menu_button=menu_button)
+    
+    logger.info("Bot menu has been set up successfully!")
 
 
 # ─────────────────────────────────────────────
@@ -359,6 +385,9 @@ def main():
     application.add_error_handler(error_handler)
 
     logger.info("WhatsApp security simulator is starting...")
+
+    # Setup bot menu
+    application.post_init = setup_menu
 
     # Start Render HTTP server
     web_thread = threading.Thread(
