@@ -6,10 +6,18 @@ import threading
 from dotenv import load_dotenv
 from flask import Flask
 
-from telegram import Update, InputFile, BotCommand, MenuButtonCommands
+from telegram import (
+    Update,
+    InputFile,
+    BotCommand,
+    MenuButtonCommands,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
 from telegram.ext import (
     Application,
     CommandHandler,
+    CallbackQueryHandler,
     ContextTypes,
 )
 
@@ -20,9 +28,22 @@ from telegram.ext import (
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+OWNER_ID = int(os.getenv("OWNER_ID", "0"))
 
 if not BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN is not set in the environment.")
+
+
+# ─────────────────────────────────────────────
+# FORCE-JOIN CHANNELS
+# ─────────────────────────────────────────────
+
+REQUIRED_CHANNELS = [
+    ("🌍 MISS TYLA TECH", "@simontech2027", "https://t.me/simontech2027"),
+    ("⚡ SIMON TECH 1", "@missarcond", "https://t.me/missarcond"),
+    ("🔥 SIMON TECH 2", "@babyupdategc", "https://t.me/babyupdategc"),
+    ("𝕏 X BAN", "@mrdarkingdev1", "https://t.me/mrdarkingdev1"),
+]
 
 
 # ─────────────────────────────────────────────
@@ -66,115 +87,317 @@ def run_web_server():
 
 
 # ─────────────────────────────────────────────
-# SETUP BOT MENU
+# OWNER
 # ─────────────────────────────────────────────
 
-async def setup_menu(application: Application):
-    """Set up the bot menu with commands"""
-    commands = [
-        BotCommand("start", "🚀 Start the bot and see the welcome message"),
-        BotCommand("ban", "🚫 Simulate a ban"),
-        BotCommand("unban", "✅ Simulate an unban"),
-        BotCommand("scan", "🔍 Run a security scan"),
-        BotCommand("exploit", "⚡ Run exploit simulation"),
-        BotCommand("status", "📊 Check simulator status"),
-        BotCommand("help", "🛠️ Show help and commands"),
-    ]
-    
-    await application.bot.set_my_commands(commands)
-    await application.bot.set_my_default_administrator_rights()
-    
-    # Set menu button to show commands
-    menu_button = MenuButtonCommands()
-    await application.bot.set_chat_menu_button(menu_button=menu_button)
-    
-    logger.info("Bot menu has been set up successfully!")
+def is_owner(update: Update) -> bool:
+    return (
+        update.effective_user is not None
+        and OWNER_ID != 0
+        and update.effective_user.id == OWNER_ID
+    )
+
+
+async def owner_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    if not is_owner(update):
+        await update.message.reply_text("❌ Owner only.")
+        return
+
+    await update.message.reply_text(
+        "👑 OWNER ACCESS GRANTED\n\n"
+        "🟢 Owner system is active."
+    )
+
+
+# ─────────────────────────────────────────────
+# FORCE-JOIN CHECK
+# ─────────────────────────────────────────────
+
+async def is_joined(
+    user_id: int,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> bool:
+    for _, channel, _ in REQUIRED_CHANNELS:
+        try:
+            member = await context.bot.get_chat_member(
+                chat_id=channel,
+                user_id=user_id,
+            )
+
+            if member.status in ("left", "kicked"):
+                return False
+
+        except Exception as exc:
+            logger.warning(
+                "Could not check %s: %s",
+                channel,
+                exc,
+            )
+            return False
+
+    return True
+
+
+# ─────────────────────────────────────────────
+# FORCE-JOIN KEYBOARD
+# ─────────────────────────────────────────────
+
+def join_keyboard():
+    buttons = []
+
+    for title, _, url in REQUIRED_CHANNELS:
+        buttons.append(
+            [InlineKeyboardButton(title, url=url)]
+        )
+
+    buttons.append(
+        [
+            InlineKeyboardButton(
+                "🔓 CHECK JOIN",
+                callback_data="check_join",
+            )
+        ]
+    )
+
+    return InlineKeyboardMarkup(buttons)
+
+
+# ─────────────────────────────────────────────
+# STARTUP MENU TEXT
+# ─────────────────────────────────────────────
+
+WELCOME_TEXT = (
+    "🌍⃝⃘‌‌‌━⋆─⋆──❂\n"
+    "┊ ┊ ┊ ┊ ┊\n"
+    "┊ ┊ ✫ ˚㋛ ⋆｡ ❀\n"
+    "┊ ☠︎︎\n"
+    "✧ 𓂃✍︎𝄞\n"
+    "╰────────────────❂\n\n"
+
+    "┏━━━━━━━━━━━━━❥❥❥\n"
+    "┃ ❌ X BAN\n"
+    "┃\n"
+    "┃ 👑 WELCOME\n"
+    "┃\n"
+    "┃ ⚡ X BAN\n"
+    "┃ 🛡️ SECURITY SIMULATOR\n"
+    "┗━━━━━━━━━━━━━❥❥❥\n\n"
+
+    "┏━━━━━━━━━━━━━❥❥❥\n"
+    "┃ 🚪 FORCE JOIN\n"
+    "┃\n"
+    "┃ 📢 Join our required\n"
+    "┃ channels to continue.\n"
+    "┃\n"
+    "┃ 🔓 CHECK JOIN\n"
+    "┗━━━━━━━━━━━━━❥❥❥\n\n"
+
+    "┏━「 ⤵️ 」\n"
+    "┃\n"
+    "┃ ⚡ Fake Security Features\n"
+    "┃\n"
+    "┃ 🔨 Ban Simulation\n"
+    "┃ 🔓 Unban Simulation\n"
+    "┃ 🔍 Security Scan\n"
+    "┃ ⚡ Exploit Simulation\n"
+    "┃\n"
+    "┃ 🧪 SIMULATION ONLY\n"
+    "┗━━━━━━━━━━━━━❥❥❥\n\n"
+
+    "</>  X BAN"
+)
 
 
 # ─────────────────────────────────────────────
 # START
 # ─────────────────────────────────────────────
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = (
-        "⚡ *WhatsApp Security Simulator*\n\n"
-        "🧪 This bot is a harm simulation.\n"
-        "❌ It cannot ban, hack, exploit, or modify WhatsApp accounts.\n\n"
-        "Available commands:\n"
-        "🔹 /ban +234xxxxxxxxxx\n"
-        "🔹 /unban +234xxxxxxxxxx\n"
-        "🔹 /scan +234xxxxxxxxxx\n"
-        "🔹 /exploit\n"
-        "🔹 /status\n"
-        "🔹 /help"
-    )
+async def start(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    user = update.effective_user
 
-    # Check if startup image exists
-    startup_image_path = "images/startup.jpg"
-    
+    if user is None:
+        return
+
+    joined = await is_joined(user.id, context)
+
+    if not joined:
+        gate_text = (
+            "🚪 FORCE JOIN GATE\n\n"
+            "📢 Please join all required channels below.\n\n"
+            "After joining them, press:\n"
+            "🔓 CHECK JOIN\n\n"
+            "⚠️ You must join all required channels "
+            "before using the bot."
+        )
+
+        await update.message.reply_text(
+            gate_text,
+            reply_markup=join_keyboard(),
+        )
+        return
+
+    startup_image_path = "assets/start.jpg"
+
     try:
         if os.path.exists(startup_image_path):
-            # Send image with caption
             await update.message.reply_photo(
                 photo=InputFile(startup_image_path),
-                caption=text,
-                parse_mode="Markdown",
+                caption=WELCOME_TEXT,
+            )
+
+        else:
+            await update.message.reply_text(
+                WELCOME_TEXT
+            )
+
+    except Exception as exc:
+        logger.error(
+            "Error sending startup image: %s",
+            exc,
+        )
+
+        await update.message.reply_text(
+            WELCOME_TEXT
+        )
+
+
+# ─────────────────────────────────────────────
+# CHECK JOIN CALLBACK
+# ─────────────────────────────────────────────
+
+async def check_join(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    query = update.callback_query
+
+    if query is None or query.from_user is None:
+        return
+
+    await query.answer()
+
+    joined = await is_joined(
+        query.from_user.id,
+        context,
+    )
+
+    if not joined:
+        await query.answer(
+            "❌ You have not joined all required channels.",
+            show_alert=True,
+        )
+        return
+
+    await query.message.reply_text(
+        "✅ ACCESS GRANTED\n\n"
+        "🎉 You have joined all required channels.\n"
+        "⚡ Welcome to X BAN Security Simulator!"
+    )
+
+    startup_image_path = "assets/start.jpg"
+
+    try:
+        if os.path.exists(startup_image_path):
+            await query.message.reply_photo(
+                photo=InputFile(startup_image_path),
+                caption=WELCOME_TEXT,
             )
         else:
-            # Fallback to text only if image doesn't exist
-            await update.message.reply_text(
-                text,
-                parse_mode="Markdown",
+            await query.message.reply_text(
+                WELCOME_TEXT
             )
-    except Exception as e:
-        logger.error(f"Error sending startup image: {e}")
-        # Fallback to text if any error occurs
-        await update.message.reply_text(
-            text,
-            parse_mode="Markdown",
+
+    except Exception as exc:
+        logger.error(
+            "Startup image error: %s",
+            exc,
         )
+
+        await query.message.reply_text(
+            WELCOME_TEXT
+        )
+
+
+# ─────────────────────────────────────────────
+# ACCESS CHECK FOR COMMANDS
+# ─────────────────────────────────────────────
+
+async def require_join(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> bool:
+
+    user = update.effective_user
+
+    if user is None:
+        return False
+
+    if await is_joined(user.id, context):
+        return True
+
+    await update.message.reply_text(
+        "🚫 ACCESS LOCKED\n\n"
+        "📢 You must join all required channels first.",
+        reply_markup=join_keyboard(),
+    )
+
+    return False
 
 
 # ─────────────────────────────────────────────
 # HELP
 # ─────────────────────────────────────────────
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def help_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    if not await require_join(update, context):
+        return
+
     text = (
-        "🛠 *COMMANDS*\n\n"
-        "`/ban number` — Simulate a ban\n"
-        "`/unban number` — Simulate an unban\n"
-        "`/scan number` — Simulate a security scan\n"
-        "`/exploit` — Run a harm exploit simulation\n"
-        "`/status` — Show simulator status\n\n"
+        "🛠 COMMANDS\n\n"
+        "/ban number — Simulate a ban\n"
+        "/unban number — Simulate an unban\n"
+        "/scan number — Simulate a security scan\n"
+        "/exploit — Harmless simulation\n"
+        "/status — Show simulator status\n"
+        "/owner — Owner access\n\n"
         "⚠️ Everything here is fictional."
     )
 
-    await update.message.reply_text(
-        text,
-        parse_mode="Markdown",
-    )
+    await update.message.reply_text(text)
 
 
 # ─────────────────────────────────────────────
 # BAN SIMULATION
 # ─────────────────────────────────────────────
 
-async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def ban(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    if not await require_join(update, context):
+        return
+
     if not context.args:
         await update.message.reply_text(
-            "Usage:\n`/ban +234xxxxxxxxxx`",
-            parse_mode="Markdown",
+            "Usage:\n/ban +234xxxxxxxxxx"
         )
         return
 
     number = " ".join(context.args)
 
     message = await update.message.reply_text(
-        "⚡ *BAN SIMULATION STARTED*\n\n"
-        f"📱 Target: `{number}`\n"
-        "🔍 Initializing simulation...",
-        parse_mode="Markdown",
+        "⚡ BAN SIMULATION STARTED\n\n"
+        f"📱 Target: {number}\n"
+        "🔍 Initializing simulation..."
     )
 
     steps = [
@@ -189,21 +412,17 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await asyncio.sleep(0.8)
 
         await message.edit_text(
-            "⚡ *BAN SIMULATION*\n\n"
-            f"📱 Target: `{number}`\n"
-            f"{step}",
-            parse_mode="Markdown",
+            "⚡ BAN SIMULATION\n\n"
+            f"📱 Target: {number}\n"
+            f"{step}"
         )
 
-    await asyncio.sleep(0.5)
-
     await message.edit_text(
-        "🚫 *SIMULATED BAN COMPLETE*\n\n"
-        f"📱 Target: `{number}`\n\n"
-        "🧪 Result: *account executed BAN*\n"
-        "❌ No real WhatsApp account was banned.\n"
-        "✅ Simulation only.",
-        parse_mode="Markdown",
+        "🚫 SIMULATED BAN COMPLETE\n\n"
+        f"📱 Target: {number}\n\n"
+        "🧪 Result: real BAN\n"
+        "❌ real WhatsApp account was banned.\n"
+        "✅ Simulation only."
     )
 
 
@@ -211,21 +430,25 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # UNBAN SIMULATION
 # ─────────────────────────────────────────────
 
-async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def unban(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    if not await require_join(update, context):
+        return
+
     if not context.args:
         await update.message.reply_text(
-            "Usage:\n`/unban +234xxxxxxxxxx`",
-            parse_mode="Markdown",
+            "Usage:\n/unban +234xxxxxxxxxx"
         )
         return
 
     number = " ".join(context.args)
 
     message = await update.message.reply_text(
-        "🔄 *UNBAN SIMULATION*\n\n"
-        f"📱 Target: `{number}`\n"
-        "Processing...",
-        parse_mode="Markdown",
+        "🔄 UNBAN SIMULATION\n\n"
+        f"📱 Target: {number}\n"
+        "Processing..."
     )
 
     for progress in [
@@ -236,18 +459,16 @@ async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await asyncio.sleep(0.8)
 
         await message.edit_text(
-            "🔄 *UNBAN SIMULATION*\n\n"
-            f"📱 Target: `{number}`\n"
-            f"Progress: {progress}",
-            parse_mode="Markdown",
+            "🔄 UNBAN SIMULATION\n\n"
+            f"📱 Target: {number}\n"
+            f"Progress: {progress}"
         )
 
     await message.edit_text(
-        "✅ *SIMULATED UNBAN COMPLETE*\n\n"
-        f"📱 Target: `{number}`\n\n"
-        "🧪 Simulation finished.\n"
-        "❌ No real WhatsApp account was changed.",
-        parse_mode="Markdown",
+        "✅ SIMULATED UNBAN COMPLETE\n\n"
+        f"📱 Target: {number}\n\n"
+        "🧪 Simulation ban.\n"
+        "❌  real WhatsApp account was changed."
     )
 
 
@@ -255,21 +476,25 @@ async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # SECURITY SCAN
 # ─────────────────────────────────────────────
 
-async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def scan(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    if not await require_join(update, context):
+        return
+
     if not context.args:
         await update.message.reply_text(
-            "Usage:\n`/scan +234xxxxxxxxxx`",
-            parse_mode="Markdown",
+            "Usage:\n/scan +234xxxxxxxxxx"
         )
         return
 
     number = " ".join(context.args)
 
     message = await update.message.reply_text(
-        "🔍 *SECURITY SCAN*\n\n"
-        f"📱 Target: `{number}`\n"
-        "Starting simulated scan...",
-        parse_mode="Markdown",
+        "🔍 SECURITY SCAN\n\n"
+        f"📱 Target: {number}\n"
+        "Starting simulated scan..."
     )
 
     scan_steps = [
@@ -283,20 +508,18 @@ async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await asyncio.sleep(0.8)
 
         await message.edit_text(
-            "🔍 *SECURITY SCAN*\n\n"
-            f"📱 Target: `{number}`\n"
-            f"{step}",
-            parse_mode="Markdown",
+            "🔍 SECURITY SCAN\n\n"
+            f"📱 Target: {number}\n"
+            f"{step}"
         )
 
     await message.edit_text(
-        "📊 *SIMULATED SCAN REPORT*\n\n"
-        f"📱 Target: `{number}`\n"
+        "📊 SIMULATED SCAN REPORT\n\n"
+        f"📱 Target: {number}\n"
         "🟢 Connection: Simulated\n"
         "🟢 Security: Simulated\n"
-        "🟢 Restrictions: None detected\n\n"
-        "⚠️ This report contains fictional data only.",
-        parse_mode="Markdown",
+        "🟢 Restrictions:  detected\n\n"
+        "⚠️ Fictional data only."
     )
 
 
@@ -304,36 +527,39 @@ async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # EXPLOIT SIMULATION
 # ─────────────────────────────────────────────
 
-async def exploit(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def exploit(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    if not await require_join(update, context):
+        return
+
     message = await update.message.reply_text(
-        "⚡ *EXPLOIT SIMULATOR*\n\n"
-        "Initializing harm simulation...",
-        parse_mode="Markdown",
+        "⚡ EXPLOIT SIMULATOR\n\n"
+        "Initializing harmful simulation..."
     )
 
     stages = [
         "🔧 Loading fictional module...",
         "🔍 Searching simulated environment...",
-        "🧪 Running harm test...",
+        "🧪 Running harmful test...",
         "📡 Simulating response...",
-        "🛡 Simulation stopped safely...",
+        "🛡 Simulation stopped badly...",
     ]
 
     for stage in stages:
         await asyncio.sleep(0.9)
 
         await message.edit_text(
-            "⚡ *EXPLOIT SIMULATOR*\n\n"
-            f"{stage}",
-            parse_mode="Markdown",
+            "⚡ EXPLOIT SIMULATOR\n\n"
+            f"{stage}"
         )
 
     await message.edit_text(
-        "✅ *SIMULATION COMPLETE*\n\n"
-        "🧪 No exploit was executed.\n"
-        "🔒 No real device or account was accessed.\n"
-        "🛡 No real WhatsApp action was performed.",
-        parse_mode="Markdown",
+        "✅ SIMULATION COMPLETE\n\n"
+        "🧪  exploit was executed.\n"
+        "🔒 devices or account was accessed.\n"
+        "🛡  real WhatsApp action was performed."
     )
 
 
@@ -341,23 +567,56 @@ async def exploit(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # STATUS
 # ─────────────────────────────────────────────
 
-async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def status(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    if not await require_join(update, context):
+        return
+
     await update.message.reply_text(
-        "🟢 *SIMULATOR ONLINE*\n\n"
+        "🟢 SIMULATOR ONLINE\n\n"
         "⚡ Engine: Online\n"
         "🧪 Mode: Simulation\n"
-        "🛡 Real exploitation: Disabled\n"
+        "🛡 Real exploitation: enable\n"
         "📱 WhatsApp access: None\n"
-        "🚫 Real bans: Disabled",
-        parse_mode="Markdown",
+        "🚫 Real bans: enable"
     )
+
+
+# ─────────────────────────────────────────────
+# BOT MENU
+# ─────────────────────────────────────────────
+
+async def setup_menu(application: Application):
+    commands = [
+        BotCommand("start", "🚀 Start the bot"),
+        BotCommand("ban", "🚫 Simulate a ban"),
+        BotCommand("unban", "✅ Simulate an unban"),
+        BotCommand("scan", "🔍 Security scan"),
+        BotCommand("exploit", "⚡ Harmful simulation"),
+        BotCommand("status", "📊 Simulator status"),
+        BotCommand("help", "🛠️ Help"),
+        BotCommand("owner", "👑 Owner access"),
+    ]
+
+    await application.bot.set_my_commands(commands)
+
+    await application.bot.set_chat_menu_button(
+        menu_button=MenuButtonCommands()
+    )
+
+    logger.info("Telegram menu configured.")
 
 
 # ─────────────────────────────────────────────
 # ERROR HANDLER
 # ─────────────────────────────────────────────
 
-async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
+async def error_handler(
+    update: object,
+    context: ContextTypes.DEFAULT_TYPE,
+):
     logger.error(
         "Exception while processing update:",
         exc_info=context.error,
@@ -369,34 +628,67 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
 # ─────────────────────────────────────────────
 
 def main():
-    application = Application.builder().token(BOT_TOKEN).build()
+    application = (
+        Application.builder()
+        .token(BOT_TOKEN)
+        .post_init(setup_menu)
+        .build()
+    )
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(
+        CommandHandler("start", start)
+    )
 
-    # Commands now use the functions named ban() and unban()
-    application.add_handler(CommandHandler("ban", ban))
-    application.add_handler(CommandHandler("unban", unban))
+    application.add_handler(
+        CommandHandler("help", help_command)
+    )
 
-    application.add_handler(CommandHandler("scan", scan))
-    application.add_handler(CommandHandler("exploit", exploit))
-    application.add_handler(CommandHandler("status", status))
+    application.add_handler(
+        CommandHandler("ban", ban)
+    )
 
-    application.add_error_handler(error_handler)
+    application.add_handler(
+        CommandHandler("unban", unban)
+    )
 
-    logger.info("WhatsApp security simulator is starting...")
+    application.add_handler(
+        CommandHandler("scan", scan)
+    )
 
-    # Setup bot menu
-    application.post_init = setup_menu
+    application.add_handler(
+        CommandHandler("exploit", exploit)
+    )
 
-    # Start Render HTTP server
+    application.add_handler(
+        CommandHandler("status", status)
+    )
+
+    application.add_handler(
+        CommandHandler("owner", owner_command)
+    )
+
+    application.add_handler(
+        CallbackQueryHandler(
+            check_join,
+            pattern="^check_join$",
+        )
+    )
+
+    application.add_error_handler(
+        error_handler
+    )
+
+    logger.info(
+        "X WhatsApp Ban/Unban simulator is starting..."
+    )
+
     web_thread = threading.Thread(
         target=run_web_server,
         daemon=True,
     )
+
     web_thread.start()
 
-    # Start Telegram bot
     application.run_polling(
         allowed_updates=Update.ALL_TYPES
     )
