@@ -6,9 +6,15 @@ A Telegram bot that provides **fictional WhatsApp security and ban simulations**
 
 ## 🚀 Quick Start
 
-**Start using the bot now:** [@Iriscene1Bot](https://t.me/Iriscene1Bot)
+<a href="https://t.me/Iriscene1Bot" target="_blank">
+  <img src="https://img.shields.io/badge/Telegram-@Iriscene1Bot-0088cc?logo=telegram&logoColor=white&style=for-the-badge" alt="Start Bot on Telegram">
+</a>
 
-Click the link above or search for `@Iriscene1Bot` on Telegram to start the bot!
+**Click the button above to start using the bot on Telegram!**
+
+Or search for `@Iriscene1Bot` in your Telegram app.
+
+---
 
 ## 🚀 Features
 
