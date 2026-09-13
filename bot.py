@@ -1,8 +1,11 @@
 import os
 import asyncio
 import logging
+import threading
 
 from dotenv import load_dotenv
+from flask import Flask
+
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -10,7 +13,10 @@ from telegram.ext import (
     ContextTypes,
 )
 
-# Load environment variables
+# ─────────────────────────────────────────────
+# ENVIRONMENT
+# ─────────────────────────────────────────────
+
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -18,7 +24,11 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN is not set in the environment.")
 
-# Logging
+
+# ─────────────────────────────────────────────
+# LOGGING
+# ─────────────────────────────────────────────
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
@@ -28,14 +38,42 @@ logger = logging.getLogger(__name__)
 
 
 # ─────────────────────────────────────────────
+# RENDER WEB SERVER
+# ─────────────────────────────────────────────
+
+web_app = Flask(__name__)
+
+
+@web_app.route("/")
+def home():
+    return "WhatsApp Security Simulator is online."
+
+
+@web_app.route("/health")
+def health():
+    return "OK"
+
+
+def run_web_server():
+    port = int(os.environ.get("PORT", "10000"))
+
+    web_app.run(
+        host="0.0.0.0",
+        port=port,
+        debug=False,
+        use_reloader=False,
+    )
+
+
+# ─────────────────────────────────────────────
 # START
 # ─────────────────────────────────────────────
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
         "⚡ *WhatsApp Security Simulator*\n\n"
-        "This bot is a harm simulation.\n"
-        "It  ban, hack, exploit, or modify WhatsApp accounts.\n\n"
+        "🧪 This bot is a harm simulation.\n"
+        "❌ It  ban, hack, exploit, or modify WhatsApp accounts.\n\n"
         "Available commands:\n"
         "🔹 /ban +234xxxxxxxxxx\n"
         "🔹 /unban +234xxxxxxxxxx\n"
@@ -57,11 +95,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
-        "🛠 *Commands*\n\n"
+        "🛠 *COMMANDS*\n\n"
         "`/ban number` — Simulate a ban\n"
         "`/unban number` — Simulate an unban\n"
         "`/scan number` — Simulate a security scan\n"
-        "`/exploit` — Run a harmless exploit simulation\n"
+        "`/exploit` — Run a harm exploit simulation\n"
         "`/status` — Show simulator status\n\n"
         "⚠️ Everything here is fictional."
     )
@@ -73,10 +111,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ─────────────────────────────────────────────
-#  BAN
+# BAN SIMULATION
 # ─────────────────────────────────────────────
 
-async def fakeban(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text(
             "Usage:\n`/ban +234xxxxxxxxxx`",
@@ -89,7 +127,7 @@ async def fakeban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = await update.message.reply_text(
         "⚡ *BAN SIMULATION STARTED*\n\n"
         f"📱 Target: `{number}`\n"
-        "🔍 Initializing security check...",
+        "🔍 Initializing simulation...",
         parse_mode="Markdown",
     )
 
@@ -116,18 +154,18 @@ async def fakeban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await message.edit_text(
         "🚫 *SIMULATED BAN COMPLETE*\n\n"
         f"📱 Target: `{number}`\n\n"
-        "⚠️ Result: **REAL BAN ONLY**\n"
-        "❌ WhatsApp account was banned.\n"
-        "🧪 This is only a simulation.",
+        "🧪 Result: *account executed BAN*\n"
+        "❌ real WhatsApp account was banned.\n"
+        "✅ Simulation only.",
         parse_mode="Markdown",
     )
 
 
 # ─────────────────────────────────────────────
-# UNBAN
+# UNBAN SIMULATION
 # ─────────────────────────────────────────────
 
-async def fakeunban(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text(
             "Usage:\n`/unban +234xxxxxxxxxx`",
@@ -162,13 +200,13 @@ async def fakeunban(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "✅ *SIMULATED UNBAN COMPLETE*\n\n"
         f"📱 Target: `{number}`\n\n"
         "🧪 Simulation finished.\n"
-        "❌  real WhatsApp account was changed.",
+        "❌ real WhatsApp account was changed.",
         parse_mode="Markdown",
     )
 
 
 # ─────────────────────────────────────────────
-# SCAN
+# SECURITY SCAN
 # ─────────────────────────────────────────────
 
 async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -223,7 +261,7 @@ async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def exploit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = await update.message.reply_text(
         "⚡ *EXPLOIT SIMULATOR*\n\n"
-        "Initializing harmsimulation...",
+        "Initializing harm simulation...",
         parse_mode="Markdown",
     )
 
@@ -246,9 +284,9 @@ async def exploit(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await message.edit_text(
         "✅ *SIMULATION COMPLETE*\n\n"
-        "exploit was executed.\n"
-        "device or account was accessed.\n\n"
-        "🧪 This is a  demonstration.",
+        "🧪  exploit was executed.\n"
+        "🔒 real device or account was accessed.\n"
+        "🛡  real WhatsApp action was performed.",
         parse_mode="Markdown",
     )
 
@@ -262,7 +300,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🟢 *SIMULATOR ONLINE*\n\n"
         "⚡ Engine: Online\n"
         "🧪 Mode: Simulation\n"
-        "🛡 Real exploitation: Disabled\n"
+        "🛡 Real exploitation: enable\n"
         "📱 WhatsApp access: None\n"
         "🚫 Real bans: enable",
         parse_mode="Markdown",
@@ -289,16 +327,27 @@ def main():
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
+
+    # Commands now use the functions named ban() and unban()
     application.add_handler(CommandHandler("ban", ban))
     application.add_handler(CommandHandler("unban", unban))
+
     application.add_handler(CommandHandler("scan", scan))
     application.add_handler(CommandHandler("exploit", exploit))
     application.add_handler(CommandHandler("status", status))
 
     application.add_error_handler(error_handler)
 
-    logger.info("real banWhatsApp security simulator is starting...")
+    logger.info("WhatsApp security simulator is starting...")
 
+    # Start Render HTTP server
+    web_thread = threading.Thread(
+        target=run_web_server,
+        daemon=True,
+    )
+    web_thread.start()
+
+    # Start Telegram bot
     application.run_polling(
         allowed_updates=Update.ALL_TYPES
     )
