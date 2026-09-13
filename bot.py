@@ -6,7 +6,7 @@ import threading
 from dotenv import load_dotenv
 from flask import Flask
 
-from telegram import Update
+from telegram import Update, InputFile
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -73,7 +73,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
         "⚡ *WhatsApp Security Simulator*\n\n"
         "🧪 This bot is a harm simulation.\n"
-        "❌ It  ban, hack, exploit, or modify WhatsApp accounts.\n\n"
+        "❌ It cannot ban, hack, exploit, or modify WhatsApp accounts.\n\n"
         "Available commands:\n"
         "🔹 /ban +234xxxxxxxxxx\n"
         "🔹 /unban +234xxxxxxxxxx\n"
@@ -83,10 +83,30 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🔹 /help"
     )
 
-    await update.message.reply_text(
-        text,
-        parse_mode="Markdown",
-    )
+    # Check if startup image exists
+    startup_image_path = "images/startup.jpg"
+    
+    try:
+        if os.path.exists(startup_image_path):
+            # Send image with caption
+            await update.message.reply_photo(
+                photo=InputFile(startup_image_path),
+                caption=text,
+                parse_mode="Markdown",
+            )
+        else:
+            # Fallback to text only if image doesn't exist
+            await update.message.reply_text(
+                text,
+                parse_mode="Markdown",
+            )
+    except Exception as e:
+        logger.error(f"Error sending startup image: {e}")
+        # Fallback to text if any error occurs
+        await update.message.reply_text(
+            text,
+            parse_mode="Markdown",
+        )
 
 
 # ─────────────────────────────────────────────
@@ -155,7 +175,7 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🚫 *SIMULATED BAN COMPLETE*\n\n"
         f"📱 Target: `{number}`\n\n"
         "🧪 Result: *account executed BAN*\n"
-        "❌ real WhatsApp account was banned.\n"
+        "❌ No real WhatsApp account was banned.\n"
         "✅ Simulation only.",
         parse_mode="Markdown",
     )
@@ -200,7 +220,7 @@ async def unban(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "✅ *SIMULATED UNBAN COMPLETE*\n\n"
         f"📱 Target: `{number}`\n\n"
         "🧪 Simulation finished.\n"
-        "❌ real WhatsApp account was changed.",
+        "❌ No real WhatsApp account was changed.",
         parse_mode="Markdown",
     )
 
@@ -284,9 +304,9 @@ async def exploit(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await message.edit_text(
         "✅ *SIMULATION COMPLETE*\n\n"
-        "🧪  exploit was executed.\n"
-        "🔒 real device or account was accessed.\n"
-        "🛡  real WhatsApp action was performed.",
+        "🧪 No exploit was executed.\n"
+        "🔒 No real device or account was accessed.\n"
+        "🛡 No real WhatsApp action was performed.",
         parse_mode="Markdown",
     )
 
@@ -300,9 +320,9 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🟢 *SIMULATOR ONLINE*\n\n"
         "⚡ Engine: Online\n"
         "🧪 Mode: Simulation\n"
-        "🛡 Real exploitation: enable\n"
+        "🛡 Real exploitation: Disabled\n"
         "📱 WhatsApp access: None\n"
-        "🚫 Real bans: enable",
+        "🚫 Real bans: Disabled",
         parse_mode="Markdown",
     )
 
