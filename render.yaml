@@ -1,0 +1,9 @@
+services:
+  - type: worker
+    name: fake-whatsapp-ban-bot
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
